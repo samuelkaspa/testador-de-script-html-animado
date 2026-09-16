@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>HTML Viewer</title>
+
+  <style>
+    * {
+      box-sizing: border-box;
+      transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+    }
+
+    html, body {
+      margin: 0;
+      width: 100%;
+      height: 100%;
+      background: #0f1115;
+      color: #fff;
+      font-family: Arial, sans-serif;
+      overflow: hidden;
+    }
+
+    /* KEYFRAMES DE ANIMAÇÃO */
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(15px) scale(0.98); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
+    @keyframes pulseGlow {
+      0% { box-shadow: 0 0 5px rgba(88, 101, 242, 0.3); }
+      50% { box-shadow: 0 0 20px rgba(88, 101, 242, 0.7); }
+      100% { box-shadow: 0 0 5px rgba(88, 101, 242, 0.3); }
+    }
+
+    @keyframes floatTitle {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-3px); }
+    }
+
+    @keyframes fadeOutInfo {
+      from { opacity: 1; transform: translateY(0); }
+      to { opacity: 0; transform: translateY(10px); }
+    }
+
+    /* EDITOR */
+    #editorScreen {
+      width: 100%;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      padding: 20px;
+      gap: 15px;
+      animation: fadeIn 0.5s ease-out forwards;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 24px;
+      display: inline-block;
+      animation: floatTitle 3s ease-in-out infinite;
+      background: linear-gradient(90deg, #5865f2, #23a55a);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .subtitle {
+      color: #999;
+      margin-top: -8px;
+      animation: fadeIn 0.7s ease-out forwards;
+    }
+
+    #htmlCode {
+      flex: 1;
+      width: 100%;
+      resize: none;
+      border: 1px solid #30343d;
+      border-radius: 12px;
+      outline: none;
+      padding: 20px;
+      background: #080a0e;
+      color: #d9e2f2;
+      font-family: Consolas, Monaco, monospace;
+      font-size: 15px;
+      line-height: 1.5;
+      tab-size: 2;
+      animation: fadeIn 0.6s ease-out forwards;
+    }
+
+    #htmlCode:focus {
+      border-color: #5865f2;
+      animation: pulseGlow 2s infinite;
+    }
+
+    .buttons {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      animation: fadeIn 0.8s ease-out forwards;
+    }
+
+    button {
+      border: 0;
+      border-radius: 8px;
+      padding: 12px 18px;
+      color: white;
+      background: #5865f2;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: bold;
+      transition: all 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+
+    button:hover {
+      background: #4752c4;
+      transform: translateY(-3px) scale(1.04);
+      box-shadow: 0 8px 20px rgba(88, 101, 242, 0.4);
+    }
+
+    button:active {
+      transform: translateY(1px) scale(0.97);
+    }
+
+    #clipboardBtn {
+      background: #23a55a;
+    }
+
+    #clipboardBtn:hover {
+      background: #1d8a4b;
+      box-shadow: 0 8px 20px rgba(35, 165, 90, 0.4);
+    }
+
+    #clearBtn {
+      background: #292d35;
+    }
+
+    #clearBtn:hover {
+      background: #ed4245;
+      box-shadow: 0 8px 20px rgba(237, 66, 69, 0.4);
+    }
+
+    .info {
+      color: #777;
+      font-size: 13px;
+      animation: fadeIn 1s ease-out forwards;
+    }
+
+    .info.hide-animated {
+      animation: fadeOutInfo 0.8s ease-out forwards;
+    }
+
+    /* VIEWER */
+    #viewerScreen {
+      display: none;
+      position: fixed;
+      inset: 0;
+      width: 100vw;
+      height: 100vh;
+      background: white;
+      z-index: 999999;
+      animation: fadeIn 0.4s ease-out;
+    }
+
+    #viewerFrame {
+      width: 100%;
+      height: 100%;
+      border: none;
+      display: block;
+      background: white;
+    }
+
+    /* ÁREA DE SENSOR DO MOUSE NO CANTO SUPERIOR DIREITO */
+    .hover-zone {
+      position: fixed;
+      top: 0;
+      right: 0;
+      width: 140px;
+      height: 80px;
+      z-index: 9999999;
+    }
+
+    /* BOTÃO VOLTAR - TOTALMENTE INVISÍVEL POR PADRÃO */
+    #backBtn {
+      position: fixed;
+      top: 15px;
+      right: 15px;
+      z-index: 1000000;
+
+      padding: 10px 16px;
+      border-radius: 8px;
+
+      background: rgba(0, 0, 0, 0.85);
+      color: white;
+
+      border: 1px solid rgba(255, 255, 255, 0.2);
+
+      font-size: 14px;
+      font-weight: bold;
+
+      cursor: pointer;
+
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
+
+      /* Invisível garantido */
+      opacity: 0 !important;
+      visibility: hidden;
+      transform: translateY(-8px) scale(0.95);
+      transition: opacity 0.3s ease, transform 0.3s ease, background 0.2s ease, visibility 0.3s !important;
+    }
+
+    /* Visível apenas quando passa o mouse na zona ou no próprio botão */
+    .hover-zone:hover + #backBtn,
+    #backBtn:hover {
+      opacity: 1 !important;
+      visibility: visible !important;
+      background: rgba(0, 0, 0, 0.95);
+      transform: translateY(0) scale(1.05);
+      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.5);
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- EDITOR -->
+  <section id="editorScreen">
+    <h1>HTML Viewer</h1>
+
+    <div class="subtitle">
+      Cole seu código HTML abaixo ou execute direto da área de transferência.
+    </div>
+
+    <textarea
+      id="htmlCode"
+      spellcheck="false"
+      placeholder="Cole seu código HTML aqui...
+
+Exemplo:
+<!DOCTYPE html>
+<html>
+<body>
+  <h1>Olá!</h1>
+</body>
+</html>"
+    ></textarea>
+
+    <div class="buttons">
+      <button id="runBtn">Executar HTML</button>
+      <button id="clipboardBtn">Executar do Copiar/Colar (Sem Lag)</button>
+      <button id="downloadBtn">Download index.html</button>
+      <button id="clearBtn">Limpar</button>
+    </div>
+
+    <div class="info">
+      Pressione ENTER no campo para executar | Pressione <b>R + T</b> para reiniciar | Pressione <b>ALT + C</b> para Limpar.
+    </div>
+  </section>
+
+
+  <!-- VIEWER -->
+  <section id="viewerScreen">
+
+    <iframe id="viewerFrame"></iframe>
+
+    <!-- ZONA SENSÍVEL AO MOUSE -->
+    <div class="hover-zone"></div>
+
+    <!-- BOTÃO PARA VOLTAR -->
+    <button id="backBtn">← Voltar</button>
+
+  </section>
+
+
+  <script>
+    const editorScreen = document.getElementById("editorScreen");
+    const viewerScreen = document.getElementById("viewerScreen");
+    const htmlCode = document.getElementById("htmlCode");
+    const viewerFrame = document.getElementById("viewerFrame");
+
+    const runBtn = document.getElementById("runBtn");
+    const clipboardBtn = document.getElementById("clipboardBtn");
+    const downloadBtn = document.getElementById("downloadBtn");
+    const clearBtn = document.getElementById("clearBtn");
+    const backBtn = document.getElementById("backBtn");
+
+    let activeCode = ""; // Guarda o código atual em execução
+
+    // Executa um código genérico no iframe
+    function executeCode(code) {
+      activeCode = code;
+      viewerFrame.srcdoc = code;
+      editorScreen.style.display = "none";
+      viewerScreen.style.display = "block";
+    }
+
+    // Executa o HTML digitado no textarea
+    function runHTML() {
+      executeCode(htmlCode.value);
+    }
+
+    // Executa diretamente da área de transferência (evita lag no textarea)
+    async function runClipboardHTML() {
+      try {
+        const text = await navigator.clipboard.readText();
+        if (!text.trim()) {
+          if (htmlCode.value.trim()) {
+            runHTML();
+          }
+          return;
+        }
+        executeCode(text);
+      } catch (err) {
+        if (htmlCode.value.trim()) {
+          runHTML();
+        }
+      }
+    }
+
+    // Reinicia o script/execução atual
+    function reExecute() {
+      if (activeCode) {
+        viewerFrame.srcdoc = "";
+        setTimeout(() => {
+          viewerFrame.srcdoc = activeCode;
+        }, 50);
+      }
+    }
+
+    // Volta para o editor sem apagar o código
+    function exitViewer() {
+      viewerScreen.style.display = "none";
+      editorScreen.style.display = "flex";
+      htmlCode.focus();
+    }
+
+    // Função de Limpeza
+    function clearScript() {
+      if (confirm("Deseja apagar todo o código?")) {
+        htmlCode.value = "";
+        activeCode = "";
+        htmlCode.focus();
+      }
+    }
+
+    // Botões
+    runBtn.addEventListener("click", runHTML);
+    clipboardBtn.addEventListener("click", runClipboardHTML);
+    backBtn.addEventListener("click", exitViewer);
+    clearBtn.addEventListener("click", clearScript);
+
+    // Detecção de teclas atalhos
+    const activeKeys = {};
+
+    function handleKeyDown(event) {
+      activeKeys[event.key.toLowerCase()] = true;
+
+      // Atalho R + T para reiniciar (funciona no editor e dentro do jogo/iframe)
+      if (activeKeys["r"] && activeKeys["t"]) {
+        event.preventDefault();
+        reExecute();
+      }
+
+      // Atalho ALT + C para dar Clear sem precisar clicar
+      if (event.altKey && event.key.toLowerCase() === "c") {
+        event.preventDefault();
+        clearScript();
+      }
+
+      // ENTER no textarea
+      if (document.activeElement === htmlCode && event.key === "Enter") {
+        if (!event.shiftKey) {
+          event.preventDefault();
+          runHTML();
+        }
+      }
+    }
+
+    function handleKeyUp(event) {
+      delete activeKeys[event.key.toLowerCase()];
+    }
+
+    window.addEventListener("keydown", handleKeyDown);
+    window.addEventListener("keyup", handleKeyUp);
+
+    // Conecta o ouvinte de teclas dentro do iframe para o R + T funcionar mesmo quando clicado no jogo
+    viewerFrame.addEventListener("load", () => {
+      try {
+        const iframeWin = viewerFrame.contentWindow;
+        if (iframeWin) {
+          iframeWin.addEventListener("keydown", handleKeyDown);
+          iframeWin.addEventListener("keyup", handleKeyUp);
+        }
+      } catch (e) {
+        // Ignora erro de origem se houver
+      }
+    });
+
+    // Download index.html
+    downloadBtn.addEventListener("click", function() {
+      const code = htmlCode.value || activeCode;
+      const blob = new Blob([code], { type: "text/html;charset=utf-8" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+
+      link.href = url;
+      link.download = "index.html";
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(url);
+    });
+
+    // Executa automaticamente ao carregar (se conecta direto)
+    window.addEventListener("DOMContentLoaded", () => {
+      runClipboardHTML();
+    });
+
+    // As dicas somem permanentemente com animação suave após 5 segundos
+    setTimeout(() => {
+      const infoEl = document.querySelector(".info");
+      if (infoEl) {
+        infoEl.classList.add("hide-animated");
+        setTimeout(() => {
+          infoEl.style.display = "none";
+        }, 800);
+      }
+    }, 5000);
+  </script>
+
+</body>
+</html>
