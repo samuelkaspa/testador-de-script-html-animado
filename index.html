@@ -21,6 +21,11 @@
       overflow: hidden;
     }
 
+    button, textarea, .hover-zone {
+      touch-action: manipulation;
+      -webkit-tap-highlight-color: transparent;
+    }
+
     /* KEYFRAMES DE ANIMAÇÃO */
     @keyframes fadeIn {
       from { opacity: 0; transform: translateY(15px) scale(0.98); }
@@ -47,6 +52,7 @@
     #editorScreen {
       width: 100%;
       height: 100vh;
+      height: 100dvh;
       display: flex;
       flex-direction: column;
       padding: 20px;
@@ -62,16 +68,19 @@
       background: linear-gradient(90deg, #5865f2, #23a55a);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
+      flex-shrink: 0;
     }
 
     .subtitle {
       color: #999;
       margin-top: -8px;
       animation: fadeIn 0.7s ease-out forwards;
+      flex-shrink: 0;
     }
 
     #htmlCode {
       flex: 1;
+      min-height: 0; /* Impede estouro de tela no celular */
       width: 100%;
       resize: none;
       border: 1px solid #30343d;
@@ -96,6 +105,7 @@
       display: flex;
       gap: 10px;
       flex-wrap: wrap;
+      flex-shrink: 0;
       animation: fadeIn 0.8s ease-out forwards;
     }
 
@@ -142,6 +152,7 @@
     .info {
       color: #777;
       font-size: 13px;
+      flex-shrink: 0;
       animation: fadeIn 1s ease-out forwards;
     }
 
@@ -179,7 +190,7 @@
       z-index: 9999999;
     }
 
-    /* BOTÃO VOLTAR - TOTALMENTE INVISÍVEL POR PADRÃO */
+    /* BOTÃO VOLTAR - TOTALMENTE INVISÍVEL POR PADRÃO NO PC */
     #backBtn {
       position: fixed;
       top: 15px;
@@ -202,21 +213,160 @@
       backdrop-filter: blur(6px);
       -webkit-backdrop-filter: blur(6px);
 
-      /* Invisível garantido */
-      opacity: 0 !important;
+      white-space: nowrap;
+      width: auto;
+      max-width: max-content;
+
+      /* Invisível no PC até dar hover */
+      opacity: 0;
       visibility: hidden;
       transform: translateY(-8px) scale(0.95);
-      transition: opacity 0.3s ease, transform 0.3s ease, background 0.2s ease, visibility 0.3s !important;
+      transition: opacity 0.3s ease, transform 0.3s ease, background 0.2s ease, visibility 0.3s;
     }
 
-    /* Visível apenas quando passa o mouse na zona ou no próprio botão */
+    /* Visível apenas quando passa o mouse na zona ou no próprio botão (PC) */
     .hover-zone:hover + #backBtn,
     #backBtn:hover {
-      opacity: 1 !important;
-      visibility: visible !important;
+      opacity: 1;
+      visibility: visible;
       background: rgba(0, 0, 0, 0.95);
       transform: translateY(0) scale(1.05);
       box-shadow: 0 8px 25px rgba(0, 0, 0, 0.5);
+    }
+
+    /* ==========================================================
+       AJUSTES PARA CELULAR (TOUCH / MOBILE)
+       ========================================================== */
+
+    /* AJUSTE DO BOTÃO VOLTAR NO CELULAR (Compacto, sem esticar) */
+    @media (hover: none), (pointer: coarse) {
+      #backBtn {
+        opacity: 0.6;
+        visibility: visible;
+        transform: none;
+        top: 12px;
+        right: 12px;
+        padding: 8px 14px;
+        font-size: 13px;
+        border-radius: 20px;
+      }
+
+      #backBtn:active {
+        opacity: 1;
+        transform: scale(0.95);
+        background: rgba(0, 0, 0, 0.95);
+      }
+    }
+
+    /* CELULAR VERTICAL (PORTRAIT) */
+    @media screen and (max-width: 768px) and (orientation: portrait) {
+      #editorScreen {
+        height: 100dvh;
+        padding: 12px;
+        gap: 10px;
+        overflow: hidden;
+      }
+
+      h1 {
+        font-size: 20px;
+      }
+
+      .subtitle {
+        font-size: 12px;
+        margin-top: -4px;
+      }
+
+      #htmlCode {
+        font-size: 14px;
+        padding: 12px;
+        border-radius: 10px;
+        flex: 1;
+        min-height: 0;
+      }
+
+      .buttons {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+        width: 100%;
+        flex-shrink: 0;
+      }
+
+      button {
+        width: 100%;
+        padding: 10px 4px;
+        font-size: 11px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      .info {
+        font-size: 11px;
+        text-align: center;
+      }
+    }
+
+    /* CELULAR HORIZONTAL (LANDSCAPE) */
+    @media screen and (max-height: 500px) and (orientation: landscape) {
+      #editorScreen {
+        height: 100dvh;
+        padding: 10px 14px;
+        gap: 8px;
+        display: grid;
+        grid-template-columns: 1fr 180px;
+        grid-template-rows: auto 1fr auto;
+        grid-template-areas:
+          "header buttons"
+          "editor buttons"
+          "info   buttons";
+        overflow: hidden;
+      }
+
+      h1 {
+        grid-area: header;
+        font-size: 18px;
+      }
+
+      .subtitle {
+        display: none;
+      }
+
+      #htmlCode {
+        grid-area: editor;
+        font-size: 13px;
+        padding: 10px;
+        height: 100%;
+        min-height: 0;
+      }
+
+      .buttons {
+        grid-area: buttons;
+        display: flex;
+        flex-direction: column;
+        justify-content: flex-start;
+        gap: 6px;
+        width: 100%;
+      }
+
+      button {
+        padding: 8px;
+        font-size: 11px;
+        width: 100%;
+        text-align: center;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      .info {
+        grid-area: info;
+        font-size: 10px;
+      }
     }
   </style>
 </head>
@@ -302,18 +452,19 @@ Exemplo:
     // Executa diretamente da área de transferência (evita lag no textarea)
     async function runClipboardHTML() {
       try {
-        const text = await navigator.clipboard.readText();
-        if (!text.trim()) {
-          if (htmlCode.value.trim()) {
-            runHTML();
+        if (navigator.clipboard && navigator.clipboard.readText) {
+          const text = await navigator.clipboard.readText();
+          if (text && text.trim()) {
+            executeCode(text);
+            return;
           }
-          return;
         }
-        executeCode(text);
       } catch (err) {
-        if (htmlCode.value.trim()) {
-          runHTML();
-        }
+        // Se a permissão for negada no celular, executa o do textarea
+      }
+
+      if (htmlCode.value.trim()) {
+        runHTML();
       }
     }
 
@@ -343,11 +494,27 @@ Exemplo:
       }
     }
 
-    // Botões
+    // Download index.html
+    function downloadScript() {
+      const code = htmlCode.value || activeCode;
+      const blob = new Blob([code], { type: "text/html;charset=utf-8" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+
+      link.href = url;
+      link.download = "index.html";
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(url);
+    }
+
+    // Ouvintes de evento padrão (Compatível com PC e Celular sem travar)
     runBtn.addEventListener("click", runHTML);
     clipboardBtn.addEventListener("click", runClipboardHTML);
-    backBtn.addEventListener("click", exitViewer);
+    downloadBtn.addEventListener("click", downloadScript);
     clearBtn.addEventListener("click", clearScript);
+    backBtn.addEventListener("click", exitViewer);
 
     // Detecção de teclas atalhos
     const activeKeys = {};
@@ -355,13 +522,13 @@ Exemplo:
     function handleKeyDown(event) {
       activeKeys[event.key.toLowerCase()] = true;
 
-      // Atalho R + T para reiniciar (funciona no editor e dentro do jogo/iframe)
+      // Atalho R + T para reiniciar
       if (activeKeys["r"] && activeKeys["t"]) {
         event.preventDefault();
         reExecute();
       }
 
-      // Atalho ALT + C para dar Clear sem precisar clicar
+      // Atalho ALT + C para dar Clear
       if (event.altKey && event.key.toLowerCase() === "c") {
         event.preventDefault();
         clearScript();
@@ -383,7 +550,7 @@ Exemplo:
     window.addEventListener("keydown", handleKeyDown);
     window.addEventListener("keyup", handleKeyUp);
 
-    // Conecta o ouvinte de teclas dentro do iframe para o R + T funcionar mesmo quando clicado no jogo
+    // Conecta o ouvinte de teclas dentro do iframe
     viewerFrame.addEventListener("load", () => {
       try {
         const iframeWin = viewerFrame.contentWindow;
@@ -396,27 +563,12 @@ Exemplo:
       }
     });
 
-    // Download index.html
-    downloadBtn.addEventListener("click", function() {
-      const code = htmlCode.value || activeCode;
-      const blob = new Blob([code], { type: "text/html;charset=utf-8" });
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement("a");
-
-      link.href = url;
-      link.download = "index.html";
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-      URL.revokeObjectURL(url);
-    });
-
-    // Executa automaticamente ao carregar (se conecta direto)
+    // Executa automaticamente ao carregar
     window.addEventListener("DOMContentLoaded", () => {
       runClipboardHTML();
     });
 
-    // As dicas somem permanentemente com animação suave após 5 segundos
+    // As dicas somem com animação após 5 segundos
     setTimeout(() => {
       const infoEl = document.querySelector(".info");
       if (infoEl) {
